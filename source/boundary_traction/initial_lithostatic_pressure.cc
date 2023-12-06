@@ -283,12 +283,8 @@ namespace aspect
       // normal traction component we want to prescribed even though the
       // depth might not equal the depth of the initial profile because the
       // surface has been deformed. 
-      const bool on_bottom_boundary = point_on_bottom_boundary (p);
-      Tensor<1,dim> traction;
-      if (on_bottom_boundary)
-        traction = -pressure.back() * normal;
-      else
-        traction = -interpolate_pressure(p) * normal;
+    Tensor<1,dim> traction;
+      traction = -interpolate_pressure(position) * normal_vector;
 
       return traction;
     }
