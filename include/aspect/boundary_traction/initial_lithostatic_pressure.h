@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2011 - 2023 by the authors of the ASPECT code.
+  Copyright (C) 2011 - 2019 by the authors of the ASPECT code.
 
   This file is part of ASPECT.
 
@@ -57,10 +57,10 @@ namespace aspect
          * (outward) normal vector to the domain is also provided as
          * a second argument.
          */
-        Tensor<1,dim>
-        boundary_traction (const types::boundary_id boundary_indicator,
-                           const Point<dim> &position,
-                           const Tensor<1,dim> &normal_vector) const override;
+            Tensor<1,dim>
+          boundary_traction (const types::boundary_id boundary_indicator,
+                             const Point<dim> &position,
+                             const Tensor<1,dim> &normal_vector) const override;
 
 
         /**
@@ -105,6 +105,22 @@ namespace aspect
          * based on depth interpolation between computed pressure values.
          */
         double interpolate_pressure (const Point<dim> &p) const;
+
+        /**
+         * Return whether the given point lies on the bottom boundary of
+         * the model domain.
+         */
+        bool point_on_bottom_boundary(const Point<dim> &p) const;
+
+        /**
+         * The boundary ids of those boundaries with prescribed tractions. 
+         */
+        std::set<types::boundary_id> traction_bi;
+
+        /**
+         * The vertical coordinate of the bottom domain boundary.
+         */
+        double bottom_vertical_coordinate;
     };
   }
 }

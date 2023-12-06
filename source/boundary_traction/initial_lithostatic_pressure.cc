@@ -47,11 +47,12 @@ namespace aspect
     {
       // Ensure the initial lithostatic pressure traction boundary conditions are used,
       // and register for which boundary indicators these conditions are set.
-      for (const auto &p : this->get_boundary_traction())
-        {
-          if (p.second.get() == this)
-            traction_bi.insert(p.first);
-        }
+     for (const auto &p : this->get_boundary_traction_manager().get_active_boundary_traction_conditions())
+        {   
+          for (const auto &plugin : p.second)
+            if (plugin.get() == this)
+              traction_bi.insert(p.first);
+        } 
       AssertThrow(*(traction_bi.begin()) != numbers::invalid_boundary_id,
                   ExcMessage("Did not find any boundary indicators for the initial lithostatic pressure plugin."));
 
@@ -269,8 +270,9 @@ namespace aspect
     template <int dim>
     Tensor<1,dim>
     InitialLithostaticPressure<dim>::
-    traction (const Point<dim> &p,
-              const Tensor<1,dim> &normal) const
+     boundary_traction (const types::boundary_id /*boundary_indicator*/,
+                       const Point<dim> &position,
+                       const Tensor<1,dim> &normal_vector) const
     {
       // We want to set the normal component to the vertical boundary
       // to the lithostatic pressure, the rest of the traction
