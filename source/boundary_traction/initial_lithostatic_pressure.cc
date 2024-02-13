@@ -271,8 +271,8 @@ namespace aspect
     Tensor<1,dim>
     InitialLithostaticPressure<dim>::
      boundary_traction (const types::boundary_id /*boundary_indicator*/,
-                       const Point<dim> &position,
-                       const Tensor<1,dim> &normal_vector) const
+                       const Point<dim> &p,                                        // position original
+                       const Tensor<1,dim> &normal) const
     {
       // We want to set the normal component to the vertical boundary
       // to the lithostatic pressure, the rest of the traction
@@ -283,8 +283,12 @@ namespace aspect
       // normal traction component we want to prescribed even though the
       // depth might not equal the depth of the initial profile because the
       // surface has been deformed. 
-    Tensor<1,dim> traction;
-      traction = -interpolate_pressure(position) * normal_vector;
+ const bool on_bottom_boundary = point_on_bottom_boundary (p);
+       Tensor<1,dim> traction;
+       if (on_bottom_boundary)
+         traction = -pressure.back() * normal;
+       else
+         traction = -interpolate_pressure(p) * normal;
 
       return traction;
     }
