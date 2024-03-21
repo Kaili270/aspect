@@ -60,6 +60,8 @@ namespace aspect
     void fastscape_set_u_(double *up);
     void fastscape_set_h_(double *hp);
     void fastscape_set_basement_(double *b);
+    // Xiaoping modified here to have the etot for restart of aspect, Aug 2023
+    void fastscape_reset_cumulative_erosion_(double *etot);
 
     // Functions to run FastScape
     void fastscape_get_step_(int *sstep);
@@ -72,6 +74,9 @@ namespace aspect
     void fastscape_copy_h_(double *hp);
     // Copy the basement array from FastScape back into ASPECT.
     void fastscape_copy_basement_(double *b);
+    // Xiaoping modified here to have the etot for restart of aspect, Aug 2023
+    // Copy the etot array from FastScape back into ASPECT.
+    void fastscape_copy_total_erosion_(double *etot);
     // Initialize stratigrapy, called once and handles visualization from there on.
     void fastscape_strati_(const int *nstepp, const int *nreflectorp, int *nfreqp, const double *vexp);
     //void folder_output_(int *length, int *astep, const char *c);

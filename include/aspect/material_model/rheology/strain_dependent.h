@@ -224,6 +224,7 @@ namespace aspect
            * every time we need it.
            */
           mutable std::unique_ptr<FEPointEvaluation<dim, dim>> evaluator;
+          bool cleaning_strain;
       };
     }
   }
