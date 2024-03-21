@@ -84,6 +84,11 @@ namespace aspect
           if (in.fail())
             AssertThrow(false,ExcMessage("Cannot open basement file to restart FastScape."));
           in.close();
+            
+          in.open(dirname + "fastscape_etot_restart.txt");
+          if (in.fail())
+            AssertThrow(false,ExcMessage("Cannot open etot file to restart FastScape."));
+          in.close();
 
           in.open(dirname + "fastscape_steps_restart.txt");
           if (in.fail())
@@ -277,6 +282,7 @@ namespace aspect
               std::unique_ptr<double[]> kf (new double[array_size]());
               std::unique_ptr<double[]> kd (new double[array_size]());
               std::unique_ptr<double[]> b (new double[array_size]());
+              std::unique_ptr<double[]> etot (new double[array_size]());
               std::vector<double> h_old(array_size);
 
               // Create variables for output directory and restart file
@@ -286,6 +292,7 @@ namespace aspect
               const std::string restart_filename = dirname + "fastscape_h_restart.txt";
               const std::string restart_step_filename = dirname + "fastscape_steps_restart.txt";
               const std::string restart_filename_basement = dirname + "fastscape_b_restart.txt";
+              const std::string restart_filename_etot = dirname + "fastscape_etot_restart.txt";
 
               // Determine whether to create a VTK file this timestep.
               bool make_vtk = 0;
@@ -322,7 +329,7 @@ namespace aspect
                   vx[temporary_variables[1][i]]= temporary_variables[2][i];
                   vz[temporary_variables[1][i]]= temporary_variables[dim+1][i];
 
-                  if (dim == 2 )
+                  if (dim == 2)
                     vy[temporary_variables[1][i]]=0;
                   else
                     vy[temporary_variables[1][i]]=temporary_variables[3][i];
@@ -402,6 +409,22 @@ namespace aspect
                           in_b.close();
                         }
 
+                      // Load in etot values.
+                      std::ifstream in_etot;
+                      in_etot.open(restart_filename_etot.c_str());
+                      if (in_etot)
+                        {
+                          int line = 0;
+
+                          while (line < array_size)
+                            {
+                              in_etot >> etot[line];
+                              line++;
+                            }
+
+                          in_etot.close();
+                        }
+
                       /*
                        * Now load the fastscape istep at time of restart.
                        * Reinitializing fastscape always resets this to 0, so here
@@ -429,6 +452,7 @@ namespace aspect
 
                   // Initialize topography
                   fastscape_init_h_(h.get());
+                  fastscape_reset_cumulative_erosion_(etot.get());
 
                   // Set erosional parameters. May have to move this if sed values are updated over time.
                   fastscape_set_erosional_parameters_(kf.get(), &kfsed, &m, &n, kd.get(), &kdsed, &g, &gsed, &p);
@@ -438,13 +462,19 @@ namespace aspect
 
                   // Only set the basement if it's a restart
                   if (current_timestep != 1)
-                    fastscape_set_basement_(b.get());
+                    {
+                      fastscape_set_basement_(b.get());
+                  //  fastscape_reset_cumulative_erosion_(etot.get());
+                    }
                 }
               else
                 {
                   // If it isn't the first timestep we ignore initialization and instead copy all height values from FastScape.
                   if (use_v)
-                    fastscape_copy_h_(h.get());
+                    {
+                      fastscape_copy_h_(h.get());
+                      fastscape_copy_total_erosion_(etot.get());
+                    }
                 }
 
               // Find the appropriate sediment rain based off the time interval.
@@ -614,10 +644,13 @@ namespace aspect
                   std::ofstream out_h (restart_filename.c_str());
                   std::ofstream out_step (restart_step_filename.c_str());
                   std::ofstream out_b (restart_filename_basement.c_str());
+                  std::ofstream out_etot (restart_filename_etot.c_str());
                   std::stringstream bufferb;
                   std::stringstream bufferh;
+                  std::stringstream bufferetot;
 
                   fastscape_copy_basement_(b.get());
+                  fastscape_copy_total_erosion_(etot.get());
 
                   out_step << (istep+restart_step) << "\n";
 
@@ -625,10 +658,12 @@ namespace aspect
                     {
                       bufferh << h[i] << "\n";
                       bufferb << b[i] << "\n";
+                      bufferetot << etot[i] << "\n";
                     }
 
                   out_h << bufferh.str();
                   out_b << bufferb.str();
+                  out_etot << bufferetot.str();
                 }
 
               // Find a fastscape timestep that is below our maximum timestep.
@@ -694,6 +729,9 @@ namespace aspect
 
                     // Outputs new h values
                     fastscape_copy_h_(h.get());
+                    
+                    // Output new etot values
+                    fastscape_copy_total_erosion_(etot.get());
                   }
                 while (istep<steps);
 
